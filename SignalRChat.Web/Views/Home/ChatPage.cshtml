@@ -1,0 +1,80 @@
+﻿@model string
+@{
+    ViewData["Title"] = "Chat Page";
+}
+
+
+<div class="row mb-3">
+    <div class="col-2">
+        <p>MEMBERS:</p>
+        <ul id="membersList" class="alert alert-primary"></ul>
+    </div>
+    <div id="chatField" class="col-8 p-0 border border-primary rounded overflow-auto" style="height:500px"></div>
+</div>
+
+<form id="form">
+    <div class="row justify-content-center">
+        <div class="col-7">
+            <input id="massageField" type="text" class="form-control" placeholder="Say something..." required>
+        </div>
+        <div class="col-1">
+            <button id="chatButton" type="submit" class="btn btn-primary">Chat!</button>
+        </div>
+    </div>
+</form>
+
+
+@section Scripts
+{
+    <script src="~/lib/signalr/dist/browser/signalr.js"></script>
+    <script type="text/javascript">
+        "use strict";
+
+        let connection = new signalR.HubConnectionBuilder().withUrl("/chatHub").build();
+        $("#chatButton").prop("disabled", true);
+
+        connection.start().then(() => {
+            connection.invoke("SaveUserName", '@Model')
+                .then(() => {
+                    $("#chatButton").prop("disabled", false);
+                })
+                .catch((err) => {
+                    return console.error(err.toString());
+                });
+        }).catch((err) => {
+            return console.error(err.toString());
+        });
+
+        connection.on("ReceiveMessage", (userName, message) => {
+            let template = buildMessageTemplate(userName, message, userName === '@Model');
+            $("#chatField").append(template);
+        });
+
+        connection.on("UpdateMembers", (members) => {
+            let $membersList = $("#membersList");
+            $membersList.html("");
+            members.forEach(member =>
+            {
+                $membersList.append(`<li>${member}</li>`);
+            });
+        });
+
+        $("#form").on("submit", (event) => {
+            let message = $("#massageField").val();
+            connection.invoke("SendMessage", '@Model', message)
+                .catch((err) => {
+                    return console.error(err.toString());
+                });
+            $("#massageField").val('');
+            event.preventDefault();
+        });
+
+        let buildMessageTemplate = (userName, message, isSender) => {
+           return `<div class="d-flex flex-row ${isSender ? '' : 'justify-content-end' }">
+                <div class="alert ${isSender ? 'alert-primary' : 'alert-info' }" role="alert" style="display:inline-block; max-width:70%">
+                    <b>${userName}:</b> ${message}
+                </div>
+            </div>`
+        }
+    </script>
+}

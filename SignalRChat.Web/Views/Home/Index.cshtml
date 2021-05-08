@@ -1,0 +1,28 @@
+﻿@model ChatViewModel
+
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="text-center mb-4">
+    <h1 class="display-4">Welcome to SignalRChat!</h1>
+</div>
+
+@using (Html.BeginForm("Index", "Home", FormMethod.Post))
+{
+    <div class="col-sm-6 mx-auto">
+        @Html.ValidationSummary(false, "", new { @class = "text-danger" })
+        <div class="form-group row">
+            <div class="col-8">
+                @Html.TextBoxFor(m => m.UserName, new { @class = "form-control", placeholder = "Your name here..." })
+            </div>
+            <div class="col-4">
+                <button type="submit" class="btn btn-primary">Enter chat</button>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}
